@@ -1,11 +1,14 @@
 package org.monogram.feature.profile.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -24,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,13 +36,18 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.monogram.core.common.Outcome
 import org.monogram.core.models.Message
@@ -50,7 +59,10 @@ import org.monogram.core.ui.components.MediaPreviewViewer
 import org.monogram.core.ui.components.ProfileSkeleton
 import org.monogram.core.ui.loading.MonogramRefreshBox
 import org.monogram.core.ui.rememberCacheGeneration
+import org.monogram.feature.profile.DEFAULT_PROFILE_BACKGROUND_TRANSPARENCY
+import org.monogram.feature.profile.ProfileBackgroundStorage
 import org.monogram.feature.profile.ProfileComponent
+import org.monogram.feature.profile.normalizeProfileBackgroundTransparency
 import org.monogram.feature.profile.R
 import org.monogram.network.http.MediaPriority
 import org.monogram.network.http.MediaRepository
@@ -68,6 +80,42 @@ fun ProfileContent(component: ProfileComponent, modifier: Modifier = Modifier) {
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val clipboard = LocalClipboard.current
+    val context = LocalContext.current
+    val backgroundAccountId = profile?.takeIf { it.isSelf }?.id?.value
+    val savedBackground = remember(context, backgroundAccountId) {
+        backgroundAccountId?.let { ProfileBackgroundStorage.load(context, it) }
+    }
+    var backgroundFile by remember(backgroundAccountId) { mutableStateOf(savedBackground?.file) }
+    var backgroundTransparency by remember(backgroundAccountId) {
+        mutableFloatStateOf(savedBackground?.transparency ?: DEFAULT_PROFILE_BACKGROUND_TRANSPARENCY)
+    }
+    var showCustomization by rememberSaveable(backgroundAccountId) { mutableStateOf(false) }
+    var importingBackground by remember { mutableStateOf(false) }
+    var backgroundImportError by remember { mutableStateOf(false) }
+    val backgroundPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        val accountId = backgroundAccountId
+        if (uri != null && accountId != null) {
+            scope.launch {
+                importingBackground = true
+                backgroundImportError = false
+                var importedFile: java.io.File? = null
+                try {
+                    val imported = ProfileBackgroundStorage.importBackground(context, accountId, uri)
+                    importedFile = imported
+                    val previous = ProfileBackgroundStorage.select(context, accountId, imported)
+                    backgroundFile = imported
+                    previous?.let { old -> scope.launch(Dispatchers.IO) { old.delete() } }
+                } catch (cancel: CancellationException) {
+                    throw cancel
+                } catch (_: Exception) {
+                    importedFile?.let { file -> withContext(Dispatchers.IO) { file.delete() } }
+                    backgroundImportError = true
+                } finally {
+                    importingBackground = false
+                }
+            }
+        }
+    }
     var showAvatar by rememberSaveable { mutableStateOf(false) }
     var selectedMedia by remember { mutableStateOf<Message?>(null) }
     var avatarAttempt by remember(profile?.id?.value) { mutableIntStateOf(0) }
@@ -113,7 +161,7 @@ fun ProfileContent(component: ProfileComponent, modifier: Modifier = Modifier) {
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
@@ -121,81 +169,104 @@ fun ProfileContent(component: ProfileComponent, modifier: Modifier = Modifier) {
                 atTop = atTop,
                 title = profile?.title,
                 onBack = component::onBack,
+                onCustomize = if (profile?.isSelf == true) {
+                    {
+                        backgroundImportError = false
+                        showCustomization = true
+                    }
+                } else {
+                    null
+                },
             )
         },
     ) { inner ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = inner.calculateTopPadding()),
+                .background(MaterialTheme.colorScheme.surface),
         ) {
-            AppStatusBanner(
-                sync = AppSyncStatus.Hidden,
-                error = state.error,
-                onRetry = component::onRefresh,
-            )
-            MonogramRefreshBox(
-                isRefreshing = pullRefreshing,
-                onRefresh = {
-                    pullRefreshing = true
-                    component.onRefresh()
-                },
-                modifier = Modifier.fillMaxSize(),
+            if (profile?.isSelf == true && !showCustomization) {
+                backgroundFile?.takeIf { it.isFile }?.let { file ->
+                    ProfileBackgroundLayer(
+                        file = file,
+                        transparency = backgroundTransparency,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = inner.calculateTopPadding()),
             ) {
-                AnimatedContent(
-                    targetState = profile != null,
-                    transitionSpec = {
-                        fadeIn(tween(200)) togetherWith fadeOut(tween(150))
+                AppStatusBanner(
+                    sync = AppSyncStatus.Hidden,
+                    error = state.error,
+                    onRetry = component::onRefresh,
+                )
+                MonogramRefreshBox(
+                    isRefreshing = pullRefreshing,
+                    onRefresh = {
+                        pullRefreshing = true
+                        component.onRefresh()
                     },
-                    label = "profileContentTransition",
-                ) { hasProfile ->
-                    if (hasProfile && profile != null) {
-                        LazyColumn(
-                            state = listState,
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(
-                                start = 16.dp,
-                                end = 16.dp,
-                                top = 8.dp,
-                                bottom = 24.dp,
-                            ),
-                        ) {
-                            item(key = "header") {
-                                ProfileHeader(
-                                    profile = profile,
-                                    avatarFile = avatarFile,
-                                    avatarState = avatar,
-                                    avatarGeneration = avatarAttempt,
-                                    avatarScale = avatarScale,
-                                    mediaRepository = component.mediaRepository,
-                                    onOpenAvatar = { showAvatar = true },
-                                    onRetryAvatar = { avatarAttempt++ },
-                                    onMessage = component::onMessage,
-                                    onCopyUsername = profile.username?.takeIf { it.isNotBlank() }?.let { handle ->
-                                        { scope.launch { clipboard.setClipEntry(ClipEntry(android.content.ClipData.newPlainText("text", "@$handle"))) } }
-                                    },
-                                    snackbar = snackbar,
-                                    clipboard = clipboard,
-                                    scope = scope,
-                                    modifier = Modifier.animateItem(),
-                                )
-                            }
-                            item(key = "panels") {
-                                Box(modifier = Modifier.animateItem()) {
-                                    ProfilePanelStrip(
-                                        state = state,
-                                        onSelect = component::onSelectPanel,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    AnimatedContent(
+                        targetState = profile != null,
+                        transitionSpec = {
+                            fadeIn(tween(200)) togetherWith fadeOut(tween(150))
+                        },
+                        label = "profileContentTransition",
+                    ) { hasProfile ->
+                        if (hasProfile && profile != null) {
+                            LazyColumn(
+                                state = listState,
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(
+                                    start = 16.dp,
+                                    end = 16.dp,
+                                    top = 8.dp,
+                                    bottom = 24.dp,
+                                ),
+                            ) {
+                                item(key = "header") {
+                                    ProfileHeader(
+                                        profile = profile,
+                                        avatarFile = avatarFile,
+                                        avatarState = avatar,
+                                        avatarGeneration = avatarAttempt,
+                                        avatarScale = avatarScale,
+                                        mediaRepository = component.mediaRepository,
+                                        onOpenAvatar = { showAvatar = true },
+                                        onRetryAvatar = { avatarAttempt++ },
+                                        onMessage = component::onMessage,
+                                        onCopyUsername = profile.username?.takeIf { it.isNotBlank() }?.let { handle ->
+                                            { scope.launch { clipboard.setClipEntry(ClipEntry(android.content.ClipData.newPlainText("text", "@$handle"))) } }
+                                        },
+                                        snackbar = snackbar,
+                                        clipboard = clipboard,
+                                        scope = scope,
+                                        modifier = Modifier.animateItem(),
                                     )
                                 }
+                                item(key = "panels") {
+                                    Box(modifier = Modifier.animateItem()) {
+                                        ProfilePanelStrip(
+                                            state = state,
+                                            onSelect = component::onSelectPanel,
+                                        )
+                                    }
+                                }
+                                profilePanelContent(
+                                    state = state,
+                                    component = component,
+                                    onOpenMedia = { selectedMedia = it },
+                                )
                             }
-                            profilePanelContent(
-                                state = state,
-                                component = component,
-                                onOpenMedia = { selectedMedia = it },
-                            )
+                        } else if (state.loading) {
+                            ProfileSkeleton()
                         }
-                    } else if (state.loading) {
-                        ProfileSkeleton()
                     }
                 }
             }
@@ -216,6 +287,37 @@ fun ProfileContent(component: ProfileComponent, modifier: Modifier = Modifier) {
             message = message,
             repository = component.mediaRepository,
             onDismiss = { selectedMedia = null },
+        )
+    }
+    if (showCustomization && profile?.isSelf == true && backgroundAccountId != null) {
+        val accountId = backgroundAccountId
+        ProfileCustomizationSheet(
+            profileTitle = profile.title,
+            backgroundFile = backgroundFile?.takeIf { it.isFile },
+            transparency = backgroundTransparency,
+            busy = importingBackground,
+            error = backgroundImportError,
+            onChooseBackground = {
+                backgroundImportError = false
+                backgroundPicker.launch(arrayOf("image/*", "video/mp4"))
+            },
+            onRemoveBackground = {
+                val previous = ProfileBackgroundStorage.clear(context, accountId)
+                backgroundFile = null
+                backgroundTransparency = DEFAULT_PROFILE_BACKGROUND_TRANSPARENCY
+                backgroundImportError = false
+                scope.launch(Dispatchers.IO) { previous?.delete() }
+            },
+            onTransparencyChange = { value ->
+                backgroundTransparency = normalizeProfileBackgroundTransparency(value)
+            },
+            onTransparencyChangeFinished = {
+                ProfileBackgroundStorage.setTransparency(context, accountId, backgroundTransparency)
+            },
+            onDismiss = {
+                ProfileBackgroundStorage.setTransparency(context, accountId, backgroundTransparency)
+                showCustomization = false
+            },
         )
     }
 }

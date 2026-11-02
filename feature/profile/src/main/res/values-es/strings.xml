@@ -55,4 +55,11 @@
     <string name="profile_show_more">Mostrar más</string>
     <string name="profile_media_photo">Foto</string>
     <string name="profile_media_video">Video</string>
+    <string name="profile_customize">Personalizar perfil</string>
+    <string name="profile_background_local_only">Elige un fondo para tu perfil. Se guarda en este dispositivo y no se sube.</string>
+    <string name="profile_background_choose">Elegir del dispositivo</string>
+    <string name="profile_background_remove">Quitar fondo</string>
+    <string name="profile_background_transparency">Transparencia: %1$d%%</string>
+    <string name="profile_background_empty">No hay ningún fondo seleccionado</string>
+    <string name="profile_background_error">No se pudo usar el archivo. Elige un PNG, JPG, WebP, GIF o MP4 de hasta 100 MB.</string>
 </resources>

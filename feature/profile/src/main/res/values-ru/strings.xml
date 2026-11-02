@@ -55,4 +55,11 @@
     <string name="profile_show_more">Показать ещё</string>
     <string name="profile_media_photo">Фото</string>
     <string name="profile_media_video">Видео</string>
+    <string name="profile_customize">Настроить профиль</string>
+    <string name="profile_background_local_only">Выберите фон профиля. Он останется на этом устройстве и не будет загружен на сервер.</string>
+    <string name="profile_background_choose">Выбрать на устройстве</string>
+    <string name="profile_background_remove">Удалить фон</string>
+    <string name="profile_background_transparency">Прозрачность: %1$d%%</string>
+    <string name="profile_background_empty">Фон не выбран</string>
+    <string name="profile_background_error">Не удалось использовать файл. Выберите PNG, JPG, WebP, GIF или MP4 размером до 100 МБ.</string>
 </resources>

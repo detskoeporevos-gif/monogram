@@ -41,6 +41,7 @@ dependencies {
     api(libs.androidx.compose.material.icons)
     implementation(project(":native:mtproto"))
     implementation(libs.coil.compose)
+    implementation(libs.coil.gif)
     implementation(libs.coil.video)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)

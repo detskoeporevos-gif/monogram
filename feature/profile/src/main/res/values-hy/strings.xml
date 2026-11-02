@@ -55,4 +55,11 @@
     <string name="profile_show_more">Ցույց տալ ավելին</string>
     <string name="profile_media_photo">Լուսանկար</string>
     <string name="profile_media_video">Տեսանյութ</string>
+    <string name="profile_customize">Կարգավորել պրոֆիլը</string>
+    <string name="profile_background_local_only">Ընտրեք պրոֆիլի ֆոն։ Այն կմնա այս սարքում և չի վերբեռնվի։</string>
+    <string name="profile_background_choose">Ընտրել սարքից</string>
+    <string name="profile_background_remove">Հեռացնել ֆոնը</string>
+    <string name="profile_background_transparency">Թափանցիկություն՝ %1$d%%</string>
+    <string name="profile_background_empty">Ֆոն ընտրված չէ</string>
+    <string name="profile_background_error">Չհաջողվեց օգտագործել ֆայլը։ Ընտրեք մինչև 100 ՄԲ PNG, JPG, WebP, GIF կամ MP4 ֆայլ։</string>
 </resources>

@@ -55,4 +55,11 @@
     <string name="profile_show_more">Показати ще</string>
     <string name="profile_media_photo">Фото</string>
     <string name="profile_media_video">Відео</string>
+    <string name="profile_customize">Налаштувати профіль</string>
+    <string name="profile_background_local_only">Виберіть тло профілю. Воно залишиться на цьому пристрої й не завантажуватиметься на сервер.</string>
+    <string name="profile_background_choose">Вибрати на пристрої</string>
+    <string name="profile_background_remove">Видалити тло</string>
+    <string name="profile_background_transparency">Прозорість: %1$d%%</string>
+    <string name="profile_background_empty">Тло не вибрано</string>
+    <string name="profile_background_error">Не вдалося використати файл. Виберіть PNG, JPG, WebP, GIF або MP4 розміром до 100 МБ.</string>
 </resources>

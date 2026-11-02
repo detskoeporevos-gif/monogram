@@ -55,4 +55,11 @@
     <string name="profile_show_more">Daha fazla göster</string>
     <string name="profile_media_photo">Fotoğraf</string>
     <string name="profile_media_video">Video</string>
+    <string name="profile_customize">Profili özelleştir</string>
+    <string name="profile_background_local_only">Profiliniz için bir arka plan seçin. Bu cihazda kalır ve yüklenmez.</string>
+    <string name="profile_background_choose">Cihazdan seç</string>
+    <string name="profile_background_remove">Arka planı kaldır</string>
+    <string name="profile_background_transparency">Saydamlık: %1$d%%</string>
+    <string name="profile_background_empty">Arka plan seçilmedi</string>
+    <string name="profile_background_error">Bu dosya kullanılamadı. 100 MB boyutuna kadar PNG, JPG, WebP, GIF veya MP4 seçin.</string>
 </resources>

@@ -5,6 +5,7 @@ import coil.Coil
 import coil.EventListener
 import coil.ImageLoader
 import coil.annotation.ExperimentalCoilApi
+import coil.decode.GifDecoder
 import coil.decode.VideoFrameDecoder
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
@@ -37,7 +38,10 @@ object ImageCache {
                     .build()
             }
             .respectCacheHeaders(false)
-            .components { add(VideoFrameDecoder.Factory()) }
+            .components {
+                add(GifDecoder.Factory())
+                add(VideoFrameDecoder.Factory())
+            }
             .eventListener(leaseListener)
             .crossfade(false)
             .build()

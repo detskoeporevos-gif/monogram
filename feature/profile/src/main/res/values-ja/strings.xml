@@ -55,4 +55,11 @@
     <string name="profile_show_more">もっと見る</string>
     <string name="profile_media_photo">写真</string>
     <string name="profile_media_video">動画</string>
+    <string name="profile_customize">プロフィールをカスタマイズ</string>
+    <string name="profile_background_local_only">プロフィールの背景を選択します。この端末にのみ保存され、アップロードされません。</string>
+    <string name="profile_background_choose">端末から選択</string>
+    <string name="profile_background_remove">背景を削除</string>
+    <string name="profile_background_transparency">透明度：%1$d%%</string>
+    <string name="profile_background_empty">背景が選択されていません</string>
+    <string name="profile_background_error">このファイルは使用できません。100 MB 以下の PNG、JPG、WebP、GIF、MP4 を選択してください。</string>
 </resources>

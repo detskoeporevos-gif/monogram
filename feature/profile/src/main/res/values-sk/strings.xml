@@ -55,4 +55,11 @@
     <string name="profile_show_more">Zobraziť viac</string>
     <string name="profile_media_photo">Fotka</string>
     <string name="profile_media_video">Video</string>
+    <string name="profile_customize">Prispôsobiť profil</string>
+    <string name="profile_background_local_only">Vyberte pozadie profilu. Zostane iba v tomto zariadení a neodošle sa na server.</string>
+    <string name="profile_background_choose">Vybrať zo zariadenia</string>
+    <string name="profile_background_remove">Odstrániť pozadie</string>
+    <string name="profile_background_transparency">Priehľadnosť: %1$d%%</string>
+    <string name="profile_background_empty">Nie je vybraté žiadne pozadie</string>
+    <string name="profile_background_error">Tento súbor sa nedá použiť. Vyberte PNG, JPG, WebP, GIF alebo MP4 do 100 MB.</string>
 </resources>

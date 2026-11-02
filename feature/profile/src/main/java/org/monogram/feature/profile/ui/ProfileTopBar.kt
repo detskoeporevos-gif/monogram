@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -29,6 +30,7 @@ internal fun ProfileTopBar(
     atTop: Boolean,
     title: String?,
     onBack: () -> Unit,
+    onCustomize: (() -> Unit)?,
 ) {
     val enterFade = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
     val enterScale = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
@@ -63,6 +65,16 @@ internal fun ProfileTopBar(
                     imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                     contentDescription = stringResource(R.string.profile_back),
                 )
+            }
+        },
+        actions = {
+            onCustomize?.let { customize ->
+                IconButton(onClick = customize) {
+                    Icon(
+                        imageVector = Icons.Outlined.Palette,
+                        contentDescription = stringResource(R.string.profile_customize),
+                    )
+                }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
